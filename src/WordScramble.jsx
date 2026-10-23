@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import './mobile.css';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONSTANTS & DATA
@@ -301,12 +302,17 @@ const Input = ({ value, onChange, placeholder, maxLength, style = {} }) => (
 const LetterTile = ({ letter, index, onClick, isPlaced, isRevealed, disabled, testId = undefined }) => (
   <button
     onClick={onClick}
+    type="button"
+    aria-label={`letter ${letter}`}
     data-testid={testId}
     disabled={disabled || isPlaced}
     style={{
-      width: '52px',
-      height: '52px',
-      fontSize: '22px',
+      width: '48px',
+      height: '48px',
+      minWidth: '44px',
+      minHeight: '44px',
+      padding: 0,
+      fontSize: '24px',
       fontWeight: 'bold',
       background: isPlaced ? THEME.cardLight : isRevealed ? THEME.success : TILE_COLORS[index % TILE_COLORS.length],
       color: isPlaced ? THEME.textMuted : '#FFFFFF',
@@ -445,7 +451,7 @@ const ProfileSetupScreen = ({ onComplete }) => {
         
         <div style={{ marginBottom: '24px' }}>
           <label style={{ display: 'block', color: THEME.textMuted, marginBottom: '12px', fontSize: '14px' }}>Choose Avatar</label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))', gap: '8px' }}>
             {AVATARS.map((a) => (
               <button
                 key={a}
@@ -571,7 +577,7 @@ const GameSetupScreen = ({ profile, isHost, roomCode, players, onStart, onBack, 
             {/* Category Selection */}
             <Card style={{ marginBottom: '20px' }}>
               <div style={{ color: THEME.textMuted, marginBottom: '12px', fontSize: '14px' }}>Category</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '8px' }}>
                 {Object.entries(CATEGORIES).map(([key, data]) => (
                   <CategoryCard
                     key={key}
@@ -858,6 +864,41 @@ const GameScreen = ({ settings, profile, players, onComplete, onQuit, isSolo }) 
   };
   
   const allFilled = answerSlots.every((s) => s !== null);
+
+  // Physical keyboard support: letters fill the answer, Backspace removes the last typed letter.
+  const keyHandlerRef = useRef(null);
+  keyHandlerRef.current = (e) => {
+    if (roundComplete || e.ctrlKey || e.metaKey || e.altKey) return;
+    const target = e.target;
+    const tag = target && target.tagName ? target.tagName.toUpperCase() : '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || (target && target.isContentEditable)) return;
+    if (e.key === 'Backspace') {
+      let last = -1;
+      for (let i = answerSlots.length - 1; i >= 0; i--) {
+        if (answerSlots[i] && !answerSlots[i].isRevealed) { last = i; break; }
+      }
+      if (last !== -1) {
+        e.preventDefault();
+        removeFromSlot(last);
+      }
+      return;
+    }
+    if (typeof e.key === 'string' && /^[a-zA-Z]$/.test(e.key)) {
+      const upper = e.key.toUpperCase();
+      const idx = scrambledLetters.findIndex((l) => l.letter === upper && !l.isPlaced);
+      if (idx !== -1) {
+        e.preventDefault();
+        placeLetter(idx);
+      }
+    }
+  };
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (keyHandlerRef.current) keyHandlerRef.current(e);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
   
   return (
     <div style={{ minHeight: '100vh', background: THEME.background, padding: '20px' }}>
