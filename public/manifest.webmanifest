@@ -1,0 +1,19 @@
+{
+  "name": "Word Scramble",
+  "short_name": "Scramble",
+  "description": "Unscramble words against the clock, solo or against bots.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#6366F1",
+  "background_color": "#0F172A",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
