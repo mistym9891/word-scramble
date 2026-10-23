@@ -5,7 +5,8 @@ test('game loads, has no console errors, and responds to a click', async ({ page
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !/visits|beacon/i.test(m.text())) errors.push(m.text()); });
-  await page.goto('/');
+  // './' keeps a project-site path such as /word-scramble/ (goto('/') would hit the domain root).
+  await page.goto('./');
   await expect(page).toHaveTitle(/Word Scramble/);
   const buttons = page.locator('button');
   await expect(buttons.first()).toBeVisible();
