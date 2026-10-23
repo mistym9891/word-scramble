@@ -1,0 +1,28 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  max-width: 100%;
+}
+
+button {
+  font-family: inherit;
+  touch-action: manipulation;
+}
+
+@media (max-width: 480px) {
+  h1 {
+    overflow-wrap: anywhere;
+  }
+}
