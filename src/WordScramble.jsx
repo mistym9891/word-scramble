@@ -423,6 +423,15 @@ const CategoryCard = ({ category, data, selected, onClick }) => (
 // SCREENS
 // ═══════════════════════════════════════════════════════════════════════════
 
+const PrivacyFooter = () => (
+  <footer
+    data-testid="privacy-note"
+    style={{ marginTop: '32px', color: THEME.textMuted, fontSize: '12px', textAlign: 'center' }}
+  >
+    Privacy: no cookies, no accounts; we count page views anonymously
+  </footer>
+);
+
 const ProfileSetupScreen = ({ onComplete }) => {
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState(AVATARS[0]);
@@ -476,6 +485,7 @@ const ProfileSetupScreen = ({ onComplete }) => {
           Continue →
         </Button>
       </Card>
+      <PrivacyFooter />
     </div>
   );
 };
@@ -511,6 +521,7 @@ const HomeScreen = ({ profile, onCreateGame, onJoinGame, onSoloPlay, onQuickMatc
         👤 Solo Practice
       </Button>
     </div>
+    <PrivacyFooter />
   </div>
 );
 
