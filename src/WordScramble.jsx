@@ -214,7 +214,10 @@ const QRCode = ({ value, size = 180 }) => {
 // COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════
 
-const Button = ({ children, onClick, variant = 'primary', disabled, size = 'md', className = '', style = {} }) => {
+const isE2EMode = () =>
+  typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('e2e') === '1';
+
+const Button = ({ children, onClick, variant = 'primary', disabled, size = 'md', className = '', style = {}, testId = undefined }) => {
   const baseStyle = {
     fontWeight: 'bold',
     border: 'none',
@@ -248,6 +251,7 @@ const Button = ({ children, onClick, variant = 'primary', disabled, size = 'md',
       disabled={disabled}
       style={{ ...baseStyle, ...variants[variant], ...sizes[size], ...style }}
       className={className}
+      data-testid={testId}
     >
       {children}
     </button>
@@ -294,9 +298,10 @@ const Input = ({ value, onChange, placeholder, maxLength, style = {} }) => (
   />
 );
 
-const LetterTile = ({ letter, index, onClick, isPlaced, isRevealed, disabled }) => (
+const LetterTile = ({ letter, index, onClick, isPlaced, isRevealed, disabled, testId = undefined }) => (
   <button
     onClick={onClick}
+    data-testid={testId}
     disabled={disabled || isPlaced}
     style={{
       width: '52px',
@@ -318,7 +323,7 @@ const LetterTile = ({ letter, index, onClick, isPlaced, isRevealed, disabled }) 
   </button>
 );
 
-const AnswerSlot = ({ letter, onClick, isCorrect, isWrong, isRevealed }) => {
+const AnswerSlot = ({ letter, onClick, isCorrect, isWrong, isRevealed, testId = undefined }) => {
   let borderColor = THEME.cardLight;
   let bgColor = THEME.card;
   if (letter) { borderColor = THEME.primary; bgColor = THEME.cardLight; }
@@ -328,6 +333,7 @@ const AnswerSlot = ({ letter, onClick, isCorrect, isWrong, isRevealed }) => {
   return (
     <button
       onClick={onClick}
+      data-testid={testId}
       style={{
         width: '48px',
         height: '48px',
@@ -460,7 +466,7 @@ const ProfileSetupScreen = ({ onComplete }) => {
           </div>
         </div>
         
-        <Button onClick={handleSubmit} disabled={name.trim().length < 2} style={{ width: '100%' }} size="lg">
+        <Button onClick={handleSubmit} disabled={name.trim().length < 2} style={{ width: '100%' }} size="lg" testId="profile-continue">
           Continue →
         </Button>
       </Card>
@@ -486,16 +492,16 @@ const HomeScreen = ({ profile, onCreateGame, onJoinGame, onSoloPlay, onQuickMatc
     </p>
     
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', maxWidth: '320px' }}>
-      <Button onClick={onCreateGame} size="lg" style={{ width: '100%' }}>
+      <Button onClick={onCreateGame} size="lg" style={{ width: '100%' }} testId="mode-create">
         🎯 Create Game
       </Button>
-      <Button onClick={onJoinGame} variant="secondary" size="lg" style={{ width: '100%' }}>
+      <Button onClick={onJoinGame} variant="secondary" size="lg" style={{ width: '100%' }} testId="mode-join">
         🔗 Join Game
       </Button>
-      <Button onClick={onQuickMatch} variant="success" size="lg" style={{ width: '100%' }}>
+      <Button onClick={onQuickMatch} variant="success" size="lg" style={{ width: '100%' }} testId="mode-quick">
         ⚡ Quick Match
       </Button>
-      <Button onClick={onSoloPlay} variant="ghost" size="lg" style={{ width: '100%' }}>
+      <Button onClick={onSoloPlay} variant="ghost" size="lg" style={{ width: '100%' }} testId="mode-solo">
         👤 Solo Practice
       </Button>
     </div>
@@ -630,6 +636,7 @@ const GameSetupScreen = ({ profile, isHost, roomCode, players, onStart, onBack, 
             
             <Button
               onClick={() => onStart({ category, difficulty, rounds })}
+              testId="start-game"
               disabled={!canStart}
               size="lg"
               style={{ width: '100%' }}
@@ -723,6 +730,15 @@ const GameScreen = ({ settings, profile, players, onComplete, onQuit, isSolo }) 
     setBotSolved({});
   }, [currentRound, category, difficulty]);
   
+  // E2E-only hook: expose the current answer when the URL contains ?e2e=1
+  useEffect(() => {
+    if (!isE2EMode() || !word) return undefined;
+    window.__wsAnswer = word;
+    return () => {
+      delete window.__wsAnswer;
+    };
+  }, [word]);
+
   // Simulate bot players solving the puzzle
   useEffect(() => {
     if (roundComplete || isSolo) return;
@@ -855,6 +871,10 @@ const GameScreen = ({ settings, profile, players, onComplete, onQuit, isSolo }) 
         <Timer seconds={timeRemaining} isWarning={timeRemaining <= 10} />
       </div>
       
+      <div style={{ textAlign: 'center', color: THEME.text, fontWeight: 'bold', marginBottom: '16px' }}>
+        Score: <span data-testid="score">{scores[profile.id] || 0}</span>
+      </div>
+
       {/* Scoreboard */}
       {!isSolo && players.length > 1 && (
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', overflowX: 'auto', padding: '4px' }}>
@@ -894,6 +914,7 @@ const GameScreen = ({ settings, profile, players, onComplete, onQuit, isSolo }) 
             key={i}
             letter={slot?.letter}
             onClick={() => removeFromSlot(i)}
+            testId={`slot-${i}`}
             isCorrect={roundComplete && roundCorrect}
             isWrong={showWrong}
             isRevealed={slot?.isRevealed}
@@ -913,7 +934,7 @@ const GameScreen = ({ settings, profile, players, onComplete, onQuit, isSolo }) 
               +{calculateScore(timeRemaining, hintsUsed, config)} points
             </div>
           )}
-          <Button onClick={nextRound} style={{ marginTop: '16px' }}>
+          <Button onClick={nextRound} style={{ marginTop: '16px' }} testId="next-round">
             {currentRound >= rounds ? 'See Results' : 'Next Round →'}
           </Button>
         </Card>
@@ -930,6 +951,7 @@ const GameScreen = ({ settings, profile, players, onComplete, onQuit, isSolo }) 
                   letter={l.letter}
                   index={i}
                   onClick={() => placeLetter(i)}
+                  testId={`tile-${i}`}
                   isPlaced={l.isPlaced}
                   isRevealed={l.isRevealed}
                   disabled={roundComplete}
@@ -944,7 +966,7 @@ const GameScreen = ({ settings, profile, players, onComplete, onQuit, isSolo }) 
             <Button onClick={useHint} variant="secondary" disabled={hintsUsed >= config.hints}>
               💡 Hint ({config.hints - hintsUsed})
             </Button>
-            <Button onClick={checkAnswer} disabled={!allFilled}>✓ Check</Button>
+            <Button onClick={checkAnswer} disabled={!allFilled} testId="check-btn">✓ Check</Button>
           </div>
         </>
       )}
