@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './mobile.css';
+import BestScore from './BestScore.jsx';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONSTANTS & DATA
@@ -926,6 +927,7 @@ const GameScreen = ({ settings, profile, players, onComplete, onQuit, isSolo }) 
       <div style={{ textAlign: 'center', color: THEME.text, fontWeight: 'bold', marginBottom: '16px' }}>
         Score: <span data-testid="score">{scores[profile.id] || 0}</span>
       </div>
+      <BestScore style={{ textAlign: 'center', color: THEME.textMuted, fontSize: '14px', marginBottom: '16px' }} />
 
       {/* Scoreboard */}
       {!isSolo && players.length > 1 && (
@@ -1045,6 +1047,10 @@ const ResultsScreen = ({ players, scores, profile, onPlayAgain, onHome }) => {
       <p style={{ color: THEME.textMuted, marginBottom: '32px' }}>
         {players.length > 1 ? 'Final standings' : `Your score: ${scores[profile.id] || 0} points`}
       </p>
+      <BestScore
+        score={scores[profile.id] || 0}
+        style={{ color: THEME.secondary, fontWeight: 'bold', marginBottom: '24px' }}
+      />
       
       <Card style={{ width: '100%', maxWidth: '400px', marginBottom: '32px' }}>
         {sortedPlayers.map((player, index) => (
